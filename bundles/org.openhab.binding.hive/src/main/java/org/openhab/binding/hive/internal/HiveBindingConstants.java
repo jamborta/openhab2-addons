@@ -33,10 +33,11 @@ public class HiveBindingConstants {
 
     public static final ThingTypeUID BRIDGE_THING_TYPE = new ThingTypeUID(BINDING_ID, "bridge");
     public static final ThingTypeUID THERMOSTAT_THING_TYPE = new ThingTypeUID(BINDING_ID, "thermostat");
+    public static final ThingTypeUID TRV_THING_TYPE = new ThingTypeUID(BINDING_ID, "trv");
 
     public static final Set<ThingTypeUID> BRIDGE_THING_TYPES_UIDS = Collections.singleton(BRIDGE_THING_TYPE);
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
-            .unmodifiableSet(Stream.of(THERMOSTAT_THING_TYPE).collect(Collectors.toSet()));
+            .unmodifiableSet(Stream.of(THERMOSTAT_THING_TYPE, TRV_THING_TYPE).collect(Collectors.toSet()));
 
     // List of all Config Items
     public static final String CONFIG_USER_NAME = "USRNM";
@@ -46,6 +47,7 @@ public class HiveBindingConstants {
     // List of all node types
     public static final String RECEIVER_NODE_TYPE = "http://alertme.com/schema/json/node.class.thermostat.json#";
     public static final String THERMOSTAT_NODE_TYPE = "http://alertme.com/schema/json/node.class.thermostat.json#";
+    public static final String TRV_NODE_TYPE = "http://alertme.com/schema/json/node.class.trv.json#";
 
     // List of all channel ids
     public static final String CHANNEL_CURRENT_TEMPERATURE = "currenttemperature";

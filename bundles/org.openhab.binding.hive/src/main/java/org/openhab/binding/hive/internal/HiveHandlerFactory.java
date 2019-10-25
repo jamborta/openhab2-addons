@@ -59,6 +59,8 @@ public class HiveHandlerFactory extends BaseThingHandlerFactory {
             return handler;
         } else if (THERMOSTAT_THING_TYPE.equals(thingTypeUID)) {
             return new HiveThermostatHandler(thing);
+        } else if (TRV_THING_TYPE.equals(thingTypeUID)) {
+            return new HiveTRVHandler(thing);
         }
 
         return null;

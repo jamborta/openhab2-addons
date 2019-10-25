@@ -170,7 +170,7 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
         Request request = client.POST("https://api-prod.bgchprod.info:443/omnia/auth/sessions");
         request.content(new StringContentProvider(gson.toJson(sessionObject)), "application/json");
         request.timeout(5000, TimeUnit.MILLISECONDS);
-        request.header("Accept", "application/vnd.alertme.zoo-6.1+json");
+        request.header("Accept", "application/vnd.alertme.zoo-6.5+json");
         request.header("X-Omnia-Client", "Openhab 2");
 
         try {
@@ -204,8 +204,8 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
             ContentResponse response;
             try {
                 response = client.newRequest("https://api-prod.bgchprod.info:443/omnia/nodes").method(HttpMethod.GET)
-                        .header("Accept", "application/vnd.alertme.zoo-6.1+json")
-                        .header("Content-Type", "application/vnd.alertme.zoo-6.1+json")
+                        .header("Accept", "application/vnd.alertme.zoo-6.5+json")
+                        .header("Content-Type", "application/vnd.alertme.zoo-6.5+json")
                         .header("X-Omnia-Client", "Openhab 2").header("X-Omnia-Access-Token", token)
                         .timeout(DISCOVER_TIMEOUT_SECONDS, TimeUnit.SECONDS).send();
             } catch (InterruptedException | TimeoutException | ExecutionException e) {
@@ -233,19 +233,19 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
             HiveNodes o = gson.fromJson(response.getContentAsString(), HiveNodes.class);
 
             if (o.nodes.size() > 0) {
-                // Loop through the nodes and add thermostats but only if they are showing a temperature as the api
-                // reports lots of thermostats for some reason
+                // Loop through the nodes and add thermostats
+                // There are 3 types, heating, hot water and UI
                 HiveNode thermostat = null;
                 HiveNode systemInfo = null;
                 for (HiveNode node : o.nodes) {
                     if (node.attributes != null && node.attributes.nodeType != null
                             && node.attributes.nodeType.reportedValue.equals(THERMOSTAT_NODE_TYPE)
                             && node.attributes.temperature != null) {
-                        // If this a thermostat, and it has a current temperature, add it to discovery results
+                        // Check that this is the heating node
                         thermostat = node;
                     }
                     if (node.attributes != null && node.attributes.batteryLevel != null) {
-                        // If this a thermostat, and it has a current temperature, add it to discovery results
+                        // This is the thermostat UI node
                         systemInfo = node;
                     }
                 }
@@ -276,8 +276,8 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
             // Get thermostat reading
             try {
                 response = client.newRequest("https://api-prod.bgchprod.info:443/omnia/nodes/" + thing.getUID().getId())
-                        .method(HttpMethod.GET).header("Accept", "application/vnd.alertme.zoo-6.1+json")
-                        .header("Content-Type", "application/vnd.alertme.zoo-6.1+json")
+                        .method(HttpMethod.GET).header("Accept", "application/vnd.alertme.zoo-6.5+json")
+                        .header("Content-Type", "application/vnd.alertme.zoo-6.5+json")
                         .header("X-Omnia-Client", "Openhab 2").header("X-Omnia-Access-Token", token)
                         .timeout(DISCOVER_TIMEOUT_SECONDS, TimeUnit.SECONDS).send();
 
@@ -309,8 +309,8 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
                 response = client
                         .newRequest("https://api-prod.bgchprod.info:443/omnia/nodes/"
                                 + thing.getProperties().get("linkedDevice"))
-                        .method(HttpMethod.GET).header("Accept", "application/vnd.alertme.zoo-6.1+json")
-                        .header("Content-Type", "application/vnd.alertme.zoo-6.1+json")
+                        .method(HttpMethod.GET).header("Accept", "application/vnd.alertme.zoo-6.5+json")
+                        .header("Content-Type", "application/vnd.alertme.zoo-6.5+json")
                         .header("X-Omnia-Client", "Openhab 2").header("X-Omnia-Access-Token", token)
                         .timeout(DISCOVER_TIMEOUT_SECONDS, TimeUnit.SECONDS).send();
 
@@ -324,7 +324,7 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
                 responseString = response.getContentAsString();
                 o = gson.fromJson(responseString, HiveNodes.class);
             } catch (InterruptedException | TimeoutException | ExecutionException e) {
-                logger.warn("Failed to get battery leve: {}", e.getMessage());
+                logger.warn("Failed to get battery level: {}", e.getMessage());
             }
 
             reading.batteryLevel = o.nodes.get(0).attributes.batteryLevel;
@@ -337,8 +337,8 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
         try {
             ContentResponse response;
             response = client.newRequest("https://api-prod.bgchprod.info:443/omnia/nodes/" + uid.getId())
-                    .method(HttpMethod.PUT).header("Accept", "application/vnd.alertme.zoo-6.1+json")
-                    .header("Content-Type", "application/vnd.alertme.zoo-6.1+json")
+                    .method(HttpMethod.PUT).header("Accept", "application/vnd.alertme.zoo-6.5+json")
+                    .header("Content-Type", "application/vnd.alertme.zoo-6.5+json")
                     .header("X-Omnia-Client", "Openhab 2").header("X-Omnia-Access-Token", token)
                     .timeout(DISCOVER_TIMEOUT_SECONDS, TimeUnit.SECONDS).content(new StringContentProvider(setObject))
                     .send();
@@ -363,22 +363,22 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
 
     public void boost(ThingUID uid, OnOffType boost, int duration) {
         if (online) {
-            if (boost == OnOffType.ON) {
-                String setObject = "{\"nodes\": [{\"attributes\": {\"activeHeatCoolMode\": {\"targetValue\": \"BOOST\"},"
-                        + "\"scheduleLockDuration\": {\"targetValue\": " + duration + "}}}]}";
-                callClient(setObject, uid, "boost");
-            } else if (boost == OnOffType.OFF) {
-                String setObject = "{\"nodes\": [{\"attributes\": {\"activeHeatCoolMode\": {\"targetValue\": \"HEAT\"}, "
-                        + "\"activeScheduleLock\": {\"targetValue\": \"True\"}}}]}";
-                callClient(setObject, uid, "boost");
-            }
+            // if (boost == OnOffType.ON) {
+            // String setObject = "{\"nodes\": [{\"attributes\": {\"activeHeatCoolMode\": {\"targetValue\": \"BOOST\"},"
+            // + "\"scheduleLockDuration\": {\"targetValue\": " + duration + "}}}]}";
+            // callClient(setObject, uid, "boost");
+            // } else if (boost == OnOffType.OFF) {
+            // String setObject = "{\"nodes\": [{\"attributes\": {\"activeHeatCoolMode\": {\"targetValue\": \"HEAT\"}, "
+            // + "\"activeScheduleLock\": {\"targetValue\": \"True\"}}}]}";
+            // callClient(setObject, uid, "boost");
+            // }
         }
     }
 
     public void setTargetTemperature(ThingUID uid, float f) {
         if (online) {
-            String setObject = "{\"nodes\": [{\"attributes\": {\"targetHeatTemperature\": {\"targetValue\": " + f
-                    + "}}}]}";
+            String setObject = "{\"nodes\": [{\"features\": {\"heating_thermostat_v1\" : {\"targetHeatTemperature\": {\"targetValue\": "
+                    + f + "}}}}]}";
             callClient(setObject, uid, "target temperature");
         }
     }
