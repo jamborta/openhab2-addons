@@ -61,6 +61,12 @@ public class HiveThermostatHandler extends BaseThingHandler {
     protected void updateChannel() {
         HiveAttributes reading = getThermostatReading();
 
+        if (reading.isValid) {
+            logger.error("heating on {}", reading.stateHeatingRelay.reportedValue);
+        } else {
+            logger.error("Unable to get reading");
+        }
+
         if (!reading.isValid) {
             failureCount++;
             if (failureCount > 2) {

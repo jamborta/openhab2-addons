@@ -1,13 +1,13 @@
 /**
  * Copyright (c) 2010-2019 Contributors to the openHAB project
- *
+ * <p>
  * See the NOTICE file(s) distributed with this work for additional
  * information.
- *
+ * <p>
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
  * http://www.eclipse.org/legal/epl-2.0
- *
+ * <p>
  * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.hive.internal.handler;
@@ -72,8 +72,10 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
     private static HttpClient client = new HttpClient(new SslContextFactory(true));
     private Boolean online = false;
     protected Gson gson = new Gson();
-    @Nullable public HiveDiscoveryService hiveDiscoveryService;
-    @Nullable protected ScheduledFuture<?> refreshJob;
+    @Nullable
+    public HiveDiscoveryService hiveDiscoveryService;
+    @Nullable
+    protected ScheduledFuture<?> refreshJob;
 
     public HiveBridgeHandler(Bridge bridge) {
         super(bridge);
@@ -111,6 +113,7 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
         refreshJob = scheduler.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
+                logger.info("Updating hive channel");
                 updateChannels();
             }
         }, 5, 60, TimeUnit.SECONDS);
@@ -302,9 +305,42 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
                 reading = o.nodes.get(0).attributes;
                 reading.isValid = true;
             } catch (InterruptedException | TimeoutException | ExecutionException e) {
-                logger.warn("Failed to get thermostat reading: {}", e.getMessage());
+                if (e.getMessage().contains("WWW-Authenticate header")) {
+                    getToken();
+                } else {
+                    logger.warn("Failed to get thermostat reading: {}", e.getMessage());
+                }
                 return reading;
             }
+            try {
+                // Get battery level
+                response = client
+                        .newRequest("https://api-prod.bgchprod.info:443/omnia/nodes/"
+                                + thing.getProperties().get("linkedDevice"))
+                        .method(HttpMethod.GET).header("Accept", "application/vnd.alertme.zoo-6.1+json")
+                        .header("Content-Type", "application/vnd.alertme.zoo-6.1+json")
+                        .header("X-Omnia-Client", "Openhab 2").header("X-Omnia-Access-Token", token)
+                        .timeout(DISCOVER_TIMEOUT_SECONDS, TimeUnit.SECONDS).send();
+
+                statusCode = response.getStatus();
+                if (statusCode != HttpStatus.OK_200) {
+                    // If it failed, log the error
+                    String statusLine = response.getStatus() + " " + response.getReason();
+                    logger.warn("Error while reading from Hive API: {}", statusLine);
+                    return reading;
+                }
+                responseString = response.getContentAsString();
+                o = gson.fromJson(responseString, HiveNodes.class);
+            } catch (InterruptedException | TimeoutException | ExecutionException e) {
+                if (e.getMessage().contains("WWW-Authenticate header")) {
+                    getToken();
+                } else {
+                    logger.warn("Failed to get battery level: {}", e.getMessage());
+                }
+                return reading;
+            }
+            reading.batteryLevel = o.nodes.get(0).attributes.batteryLevel;
+            return reading;
         }
         return reading;
     }
@@ -333,7 +369,11 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
                 logger.warn("Error while reading from Hive API: {}", statusLine);
             }
         } catch (InterruptedException | TimeoutException | ExecutionException e) {
-            logger.warn("Failed to update {}: {}", type, e.getMessage());
+            if (e.getMessage().contains("WWW-Authenticate header")) {
+                getToken();
+            } else {
+                logger.warn("Failed to update {}: {}", type, e.getMessage());
+            }
         }
     }
 
