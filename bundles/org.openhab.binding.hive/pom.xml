@@ -11,6 +11,6 @@
 
   <artifactId>org.openhab.binding.hive</artifactId>
 
-  <name>openHAB Add-ons :: Bundles :: hue Binding</name>
+  <name>openHAB Add-ons :: Bundles :: Hive Binding</name>
 
 </project>

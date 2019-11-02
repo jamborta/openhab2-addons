@@ -113,7 +113,7 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
             public void run() {
                 updateChannels();
             }
-        }, 5, 30, TimeUnit.SECONDS);
+        }, 5, 60, TimeUnit.SECONDS);
     }
 
     private void updateChannels() {
@@ -170,7 +170,7 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
         Request request = client.POST("https://api-prod.bgchprod.info:443/omnia/auth/sessions");
         request.content(new StringContentProvider(gson.toJson(sessionObject)), "application/json");
         request.timeout(5000, TimeUnit.MILLISECONDS);
-        request.header("Accept", "application/vnd.alertme.zoo-6.1+json");
+        request.header("Accept", "application/vnd.alertme.zoo-6.4+json");
         request.header("X-Omnia-Client", "Openhab 2");
 
         try {
@@ -204,8 +204,8 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
             ContentResponse response;
             try {
                 response = client.newRequest("https://api-prod.bgchprod.info:443/omnia/nodes").method(HttpMethod.GET)
-                        .header("Accept", "application/vnd.alertme.zoo-6.1+json")
-                        .header("Content-Type", "application/vnd.alertme.zoo-6.1+json")
+                        .header("Accept", "application/vnd.alertme.zoo-6.4+json")
+                        .header("Content-Type", "application/vnd.alertme.zoo-6.4+json")
                         .header("X-Omnia-Client", "Openhab 2").header("X-Omnia-Access-Token", token)
                         .timeout(DISCOVER_TIMEOUT_SECONDS, TimeUnit.SECONDS).send();
             } catch (InterruptedException | TimeoutException | ExecutionException e) {
@@ -276,8 +276,9 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
             // Get thermostat reading
             try {
                 response = client.newRequest("https://api-prod.bgchprod.info:443/omnia/nodes/" + thing.getUID().getId())
-                        .method(HttpMethod.GET).header("Accept", "application/vnd.alertme.zoo-6.1+json")
-                        .header("Content-Type", "application/vnd.alertme.zoo-6.1+json")
+                        .method(HttpMethod.GET).header("Accept", "application/vnd.alertme.zoo-6.4+json")
+                        .header("Content-Type", "application/vnd.alertme.zoo-6.4+json")
+                        .header("Transfer-Encoding", "chunked")
                         .header("X-Omnia-Client", "Openhab 2").header("X-Omnia-Access-Token", token)
                         .timeout(DISCOVER_TIMEOUT_SECONDS, TimeUnit.SECONDS).send();
 
@@ -304,31 +305,6 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
                 logger.warn("Failed to get thermostat reading: {}", e.getMessage());
                 return reading;
             }
-            try {
-                // Get battery level
-                response = client
-                        .newRequest("https://api-prod.bgchprod.info:443/omnia/nodes/"
-                                + thing.getProperties().get("linkedDevice"))
-                        .method(HttpMethod.GET).header("Accept", "application/vnd.alertme.zoo-6.1+json")
-                        .header("Content-Type", "application/vnd.alertme.zoo-6.1+json")
-                        .header("X-Omnia-Client", "Openhab 2").header("X-Omnia-Access-Token", token)
-                        .timeout(DISCOVER_TIMEOUT_SECONDS, TimeUnit.SECONDS).send();
-
-                statusCode = response.getStatus();
-                if (statusCode != HttpStatus.OK_200) {
-                    // If it failed, log the error
-                    String statusLine = response.getStatus() + " " + response.getReason();
-                    logger.warn("Error while reading from Hive API: {}", statusLine);
-                    return reading;
-                }
-                responseString = response.getContentAsString();
-                o = gson.fromJson(responseString, HiveNodes.class);
-            } catch (InterruptedException | TimeoutException | ExecutionException e) {
-                logger.warn("Failed to get battery leve: {}", e.getMessage());
-            }
-
-            reading.batteryLevel = o.nodes.get(0).attributes.batteryLevel;
-            return reading;
         }
         return reading;
     }
@@ -337,8 +313,8 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
         try {
             ContentResponse response;
             response = client.newRequest("https://api-prod.bgchprod.info:443/omnia/nodes/" + uid.getId())
-                    .method(HttpMethod.PUT).header("Accept", "application/vnd.alertme.zoo-6.1+json")
-                    .header("Content-Type", "application/vnd.alertme.zoo-6.1+json")
+                    .method(HttpMethod.PUT).header("Accept", "application/vnd.alertme.zoo-6.4+json")
+                    .header("Content-Type", "application/vnd.alertme.zoo-6.4+json")
                     .header("X-Omnia-Client", "Openhab 2").header("X-Omnia-Access-Token", token)
                     .timeout(DISCOVER_TIMEOUT_SECONDS, TimeUnit.SECONDS).content(new StringContentProvider(setObject))
                     .send();
