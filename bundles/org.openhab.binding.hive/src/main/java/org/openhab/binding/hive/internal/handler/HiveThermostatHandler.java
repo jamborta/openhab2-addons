@@ -62,7 +62,12 @@ public class HiveThermostatHandler extends BaseThingHandler {
         HiveAttributes reading = getThermostatReading();
 
         if (reading.isValid) {
-            logger.error("heating on {}", reading.stateHeatingRelay.reportedValue);
+            if (reading.stateHeatingRelay.reportedValue == null) {
+             logger.error("reading.stateHeatingRelay.reportedValue is null");
+             logger.error("reading values are: {}", reading);
+            } else {
+                logger.error("heating on {}", reading.stateHeatingRelay.reportedValue);
+            }
         } else {
             logger.error("Unable to get reading");
         }
