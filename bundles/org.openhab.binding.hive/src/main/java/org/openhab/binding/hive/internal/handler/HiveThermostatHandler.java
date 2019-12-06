@@ -118,8 +118,12 @@ public class HiveThermostatHandler extends BaseThingHandler {
 
         Channel thermostatBatteryChannel = getThing().getChannel(HiveBindingConstants.CHANNEL_THERMOSTAT_BATTERY);
         if (thermostatBatteryChannel != null) {
-            updateState(thermostatBatteryChannel.getUID().getId(),
-                    DecimalType.valueOf(reading.batteryLevel.displayValue));
+            if (reading.batteryLevel != null) {
+                updateState(thermostatBatteryChannel.getUID().getId(),
+                        DecimalType.valueOf(reading.batteryLevel.displayValue));
+            } else {
+                logger.error("Unable to read battery level.");
+            }
         }
 
         // Work out which mode we are in
