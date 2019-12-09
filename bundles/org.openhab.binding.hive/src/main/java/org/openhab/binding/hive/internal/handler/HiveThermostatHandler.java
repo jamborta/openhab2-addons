@@ -60,19 +60,15 @@ public class HiveThermostatHandler extends BaseThingHandler {
 
     protected void updateChannel() {
         HiveAttributes reading = getThermostatReading();
-
-        if (reading.isValid) {
-            if (reading.stateHeatingRelay == null) {
-             logger.error("reading.stateHeatingRelay is null");
-             logger.error("reading values are: {}", reading);
-            } else {
-                logger.error("heating on {}", reading.stateHeatingRelay.reportedValue);
-            }
-        } else {
-            logger.error("Unable to get reading");
-        }
-
         if (!reading.isValid) {
+            failureCount++;
+            if (failureCount > 2) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                        "Unable to get the status of your thermostat, this may be a temporary problem with the HIVE api");
+            }
+            return;
+        } else if (reading.stateHeatingRelay == null) {
+            logger.error("reading.stateHeatingRelay is null");
             failureCount++;
             if (failureCount > 2) {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
