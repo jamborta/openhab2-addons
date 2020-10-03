@@ -17,12 +17,24 @@ package org.openhab.binding.hive.internal.dto;
  * @author Chris Foot - Initial contribution
  */
 
-public class HiveLoginSession {
+public class HiveLoginUser {
 
     public String id;
     public String username;
-    public String userId;
-    public String extCustomerLevel;
-    public String latestSupportedApiVersion;
-    public String sessionId;
+    public String firstName;
+    public String lastName;
+    public String address;
+    public String city;
+    public String country;
+    public String countryCode;
+    public String postcode;
+    public Double longitude;
+    public Double latitude;
+    public String email;
+    public String mobile;
+    public String phone;
+    public String timezone;
+    public String locale;
+    public String temperatureUnit;
+
 }

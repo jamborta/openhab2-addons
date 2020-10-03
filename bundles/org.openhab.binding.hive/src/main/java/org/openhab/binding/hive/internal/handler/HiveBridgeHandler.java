@@ -162,19 +162,13 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
         int statusCode = 0;
 
         JsonObject sessionObject = new JsonObject();
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("caller", "WEB");
-        jsonObject.addProperty("username", username);
-        jsonObject.addProperty("password", password);
-        JsonArray array = new JsonArray();
-        array.add(jsonObject);
-        sessionObject.add("sessions", array);
+        sessionObject.addProperty("username", username);
+        sessionObject.addProperty("password", password);
 
-        Request request = client.POST("https://api-prod.bgchprod.info:443/omnia/auth/sessions");
+        Request request = client.POST("https://beekeeper.hivehome.com/1.0/cognito/login");
         request.content(new StringContentProvider(gson.toJson(sessionObject)), "application/json");
         request.timeout(5000, TimeUnit.MILLISECONDS);
-        request.header("Accept", "application/vnd.alertme.zoo-6.4+json");
-        request.header("X-Omnia-Client", "Openhab 2");
+        request.header("Accept", "application/json");
 
         try {
             response = request.send();
@@ -192,9 +186,9 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
         }
 
         HiveLoginResponse o = gson.fromJson(response.getContentAsString(), HiveLoginResponse.class);
-        if (o.sessions != null) {
-            configuration.put(CONFIG_TOKEN, o.sessions.get(0).sessionId);
-            token = o.sessions.get(0).sessionId;
+        if (o.token != null) {
+            configuration.put(CONFIG_TOKEN, o.token);
+            token = o.token;
             return true;
         }
         logger.warn("Hive API did not provide token: {}", response.getContentAsString());

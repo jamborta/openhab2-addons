@@ -20,5 +20,9 @@ import java.util.List;
  */
 public class HiveLoginResponse {
 
-    public List<HiveLoginSession> sessions;
+    public HiveLoginUser user;
+    public String token;
+    public String refreshToken;
+    public String accessToken;
+
 }
