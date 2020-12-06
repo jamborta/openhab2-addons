@@ -50,9 +50,14 @@ import org.openhab.binding.hive.internal.dto.HiveNodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import org.apache.commons.io.IOUtils;
+
 
 /**
  * The {@link HiveBridgeHandler} is responsible for handling commands, which are
@@ -161,19 +166,34 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
         ContentResponse response;
         int statusCode = 0;
 
-        JsonObject sessionObject = new JsonObject();
-        sessionObject.addProperty("username", username);
-        sessionObject.addProperty("password", password);
-
-        Request request = client.POST("https://beekeeper.hivehome.com/1.0/cognito/login");
-        request.content(new StringContentProvider(gson.toJson(sessionObject)), "application/json");
-        request.timeout(5000, TimeUnit.MILLISECONDS);
-        request.header("Accept", "application/json");
-
         try {
+
+            /**
+             * This is how HiveTokens.json is generated:
+             * https://community.hivehome.com/s/question/0D55I00000bWVqzSAG/has-the-hive-api-changed-im-getting-a-not-supported-anymore-error
+             * npm install amazon-user-pool-srp-client --save
+             * npm install axios --save
+             * Download index.js from https://www.dropbox.com/s/f9zphtaomgaqwoa/index.js?dl=0 and replace the one in node_modules/amazon-user-pool-srp-client with it
+             * Put your credentials at the end
+             * export CognitoUserPoolUsers=eu-west-1_SamNfoWtf CognitoUserPoolClientWeb=3rl4i0ajrmtdm8sbre54p9dvd9
+             * node index.js > HiveTokens.json
+             */
+
+            InputStream is = new FileInputStream("/home/tamas/token/HiveTokens.json");
+            String jsonTxt = IOUtils.toString(is, "UTF-8");
+            JsonObject sessionObject = new JsonParser().parse(jsonTxt).getAsJsonObject();
+
+            Request request = client.POST("https://beekeeper-uk.hivehome.com/1.0/cognito/refresh-token");
+            request.content(new StringContentProvider(gson.toJson(sessionObject)), "application/json");
+            request.timeout(5000, TimeUnit.MILLISECONDS);
+            request.header("Accept", "application/json");
+
             response = request.send();
         } catch (InterruptedException | TimeoutException | ExecutionException e) {
             logger.warn("Unable to communicate with Hive API: {}", e.getMessage());
+            return false;
+        } catch (IOException e) {
+            logger.warn("Token file error: {}", e.getMessage());
             return false;
         }
 
