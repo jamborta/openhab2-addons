@@ -173,7 +173,7 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
              * https://community.hivehome.com/s/question/0D55I00000bWVqzSAG/has-the-hive-api-changed-im-getting-a-not-supported-anymore-error
              * npm install amazon-user-pool-srp-client --save
              * npm install axios --save
-             * Download index.js from https://www.dropbox.com/s/f9zphtaomgaqwoa/index.js?dl=0 and replace the one in node_modules/amazon-user-pool-srp-client with it
+             * Download index.js from your dropbox ~/Dropbox/code/token and replace the one in node_modules/amazon-user-pool-srp-client with it
              * Put your credentials at the end
              * export CognitoUserPoolUsers=eu-west-1_SamNfoWtf CognitoUserPoolClientWeb=3rl4i0ajrmtdm8sbre54p9dvd9
              * node index.js > HiveTokens.json
