@@ -163,7 +163,7 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
             }
         }
         // Test the token to see if it's working, if it is, use it
-        ContentResponse response;
+        ContentResponse response = null;  // Initialize response before the try block
         int statusCode = 0;
 
         try {
@@ -191,6 +191,10 @@ public class HiveBridgeHandler extends BaseBridgeHandler {
             response = request.send();
         } catch (InterruptedException | TimeoutException | ExecutionException e) {
             logger.warn("Unable to communicate with Hive API: {}", e.getMessage());
+            if (response != null) {  // Ensure response is not null before accessing it
+                logger.warn("Response status: {}", response.getStatus());
+                logger.warn("Response headers: {}", response.getHeaders());
+            }
             return false;
         } catch (IOException e) {
             logger.warn("Token file error: {}", e.getMessage());
